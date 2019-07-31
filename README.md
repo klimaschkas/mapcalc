@@ -6,7 +6,7 @@
 - [Introduction](#introduction)
 - [Explanation](#explanation)
 - [Prerequisites](#prerequisites)
-- [Data format](#data-format)
+- [Usage](#usage)
 - [Authors](#authors)
 
 ## Introduction
@@ -20,10 +20,22 @@ The performance of your neural net will be judged using the mAP criterium define
 
 ## Prerequisites
 Packages needed:
-- NumPy
+- numpy
 
-## Data format
-Tbd
+## Usage
+```python
+from mapcalc import calculate_map, calculate_map_range
+
+# calculates the mAP for an IOU threshold of 0.5
+calculate_map(ground_truth, result, 0.5)
+
+# calculates the mAP average for the IOU thresholds 0.05, 0.1, 0.15, ..., 0.90, 0.95.
+calculate_map_range(ground_truth, result, 0.05, 0.95, 0.05)
+```
+
+The methods expect two dicts:
+* ground_truth_dict with {labels:, boxes:} 
+* result_dict with {scores:, labels:, boxes:}
 
 ## Authors:
 * **Simon Klimaschka**
