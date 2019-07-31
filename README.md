@@ -39,4 +39,4 @@ The methods expect two dicts:
 
 ## Authors:
 * **Simon Klimaschka**
-* Adapted from **João Cartucho**
+* Adapted from **João Cartucho** (https://github.com/Cartucho/mAP)

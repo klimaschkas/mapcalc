@@ -1,15 +1,21 @@
-from distutils.core import setup
-setup(
+import setuptools
+
+with open("README.md", "r") as fh:
+  long_description = fh.read()
+
+setuptools.setup(
   name='mapcalc',
   packages=['mapcalc'],
-  version='0.1',
+  version='0.1.1',
   license='apache-2.0',
   description='Calculates the mAP value in object detection tasks',
   author='Simon Klimaschka',
   author_email='simon.klimaschka@gmail.com',
   url='https://github.com/LeMuecke/mapcalc',
-  download_url='https://github.com/LeMuecke/mapcalc/archive/v_0.1-beta.tar.gz',
+  download_url='https://github.com/LeMuecke/mapcalc/archive/v_0.1.1-beta.tar.gz',
   keywords=['object detection', 'map', 'mean average precision'],
+  long_description=long_description,
+  long_description_content_type="test/markdown",
   install_requires=[
           'numpy',
       ],
@@ -23,6 +29,6 @@ setup(
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.8'
   ],
 )
