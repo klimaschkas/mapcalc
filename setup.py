@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
   name='mapcalc',
   packages=['mapcalc'],
-  version='0.1.1',
+  version='0.1.2',
   license='apache-2.0',
   description='Calculates the mAP value in object detection tasks',
   author='Simon Klimaschka',
@@ -15,7 +15,7 @@ setuptools.setup(
   download_url='https://github.com/LeMuecke/mapcalc/archive/v_0.1.1-beta.tar.gz',
   keywords=['object detection', 'map', 'mean average precision'],
   long_description=long_description,
-  long_description_content_type="test/markdown",
+  long_description_content_type="text/markdown",
   install_requires=[
           'numpy',
       ],
@@ -29,6 +29,7 @@ setuptools.setup(
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8'
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9'
   ],
 )
