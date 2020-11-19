@@ -70,15 +70,92 @@ def _voc_ap(rec, prec):
     return ap, mrec, mpre
 
 
+def _check_dicts_for_content_and_size(ground_truth_dict: dict, result_dict: dict):
+    """
+
+    Checks if the content and the size of the arrays adds up.
+    Raises and exception if not, does nothing if everything is ok.
+
+    :param ground_truth_dict: dict with {boxes:, labels:}
+    e.g.
+    {
+    'boxes':
+        [[60., 80., 66., 92.],
+         [59., 94., 68., 97.],
+         [70., 87., 81., 94.],
+         [8., 34., 10., 36.]],
+
+    'labels':
+        [2, 2, 3, 4]}
+    :param result_dict: dict with {boxes:, labels:, scores:}
+    e.g.
+    {
+    'boxes':
+        [[57., 87., 66., 94.],
+         [58., 94., 68., 95.],
+         [70., 88., 81., 93.],
+         [10., 37., 17., 40.]],
+
+    'labels':
+        [2, 3, 3, 4],
+
+    'scores':
+        [0.99056727, 0.98965424, 0.93990153, 0.9157755]}
+    :return:
+    """
+    if 'boxes' not in ground_truth_dict.keys():
+        raise ValueError("ground_truth_dict expects the keys 'boxes' and 'labels'.")
+    if 'labels' not in ground_truth_dict.keys():
+        raise ValueError("ground_truth_dict expects the keys 'boxes' and 'labels'.")
+    if 'boxes' not in result_dict.keys():
+        raise ValueError("result_dict expects the keys 'boxes' and 'labels' and optionally 'scores'.")
+    if 'labels' not in result_dict.keys():
+        raise ValueError("result_dict expects the keys 'boxes' and 'labels' and optionally 'scores'.")
+
+    if 'scores' not in result_dict.keys():
+        result_dict['scores'] = [1] * len(result_dict['boxes'])
+
+    if not len(ground_truth_dict['boxes']) == len(ground_truth_dict['labels']) == len(result_dict['boxes']) == len(
+            result_dict['labels']) == len(result_dict['scores']):
+        raise ValueError("The arrays in the dictionary have different sizes. They need to have the same size.")
+
+
 def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: float):
     """
     mAP@[iou_threshold]
 
-    :param ground_truth_dict: dict with {labels:, boxes:}
-    :param result_dict: dict with {scores:, labels:, boxes:}
+    :param ground_truth_dict: dict with {boxes:, labels:}
+    e.g.
+    {
+    'boxes':
+        [[60., 80., 66., 92.],
+         [59., 94., 68., 97.],
+         [70., 87., 81., 94.],
+         [8., 34., 10., 36.]],
+
+    'labels':
+        [2, 2, 3, 4]}
+    :param result_dict: dict with {boxes:, labels:, scores:}
+    e.g.
+    {
+    'boxes':
+        [[57., 87., 66., 94.],
+         [58., 94., 68., 95.],
+         [70., 88., 81., 93.],
+         [10., 37., 17., 40.]],
+
+    'labels':
+        [2, 3, 3, 4],
+
+    'scores':
+        [0.99056727, 0.98965424, 0.93990153, 0.9157755]}
     :param iou_threshold: minimum iou for which the detection counts as successful
     :return: mean average precision (mAP)
     """
+
+    # checking if the variables have the correct keys
+
+    _check_dicts_for_content_and_size(ground_truth_dict, result_dict)
 
     occurring_gt_classes = set(ground_truth_dict['labels'])
     unique, counts = np.unique(ground_truth_dict['labels'], return_counts=True)
@@ -169,13 +246,38 @@ def calculate_map_range(ground_truth_dict: dict, result_dict: dict, iou_begin: f
     """
     Gives mAP@[iou_begin:iou_end:iou_step], including iou_begin and iou_end.
 
-    :param ground_truth_dict: dict with {labels:, boxes:}
-    :param result_dict: dict with {scores:, labels:, boxes:}
+    :param ground_truth_dict: dict with {boxes:, labels:}
+    e.g.
+    {
+    'boxes':
+        [[60., 80., 66., 92.],
+         [59., 94., 68., 97.],
+         [70., 87., 81., 94.],
+         [8., 34., 10., 36.]],
+
+    'labels':
+        [2, 2, 3, 4]}
+    :param result_dict: dict with {boxes:, labels:, scores:}
+    e.g.
+    {
+    'boxes':
+        [[57., 87., 66., 94.],
+         [58., 94., 68., 95.],
+         [70., 88., 81., 93.],
+         [10., 37., 17., 40.]],
+
+    'labels':
+        [2, 3, 3, 4],
+
+    'scores':
+        [0.99056727, 0.98965424, 0.93990153, 0.9157755]}
     :param iou_begin: first iou to evaluate
     :param iou_end: last iou to evaluate (included!)
     :param iou_step: step size
     :return: mean average precision
     """
+
+    _check_dicts_for_content_and_size(ground_truth_dict, result_dict)
 
     iou_list = np.arange(iou_begin, iou_end + iou_step, iou_step)
 
