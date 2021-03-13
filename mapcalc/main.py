@@ -2,7 +2,6 @@
 Adapted from https://github.com/Cartucho/mAP
 """
 
-
 import numpy as np
 
 
@@ -31,11 +30,11 @@ def _voc_ap(rec, prec):
     ap=sum((mrec(i)-mrec(i-1)).*mpre(i));
     """
 
-    rec.insert(0, 0.0) # insert 0.0 at begining of list
-    rec.append(1.0) # insert 1.0 at end of list
+    rec.insert(0, 0.0)  # insert 0.0 at begining of list
+    rec.append(1.0)  # insert 1.0 at end of list
     mrec = rec[:]
-    prec.insert(0, 0.0) # insert 0.0 at begining of list
-    prec.append(0.0) # insert 0.0 at end of list
+    prec.insert(0, 0.0)  # insert 0.0 at begining of list
+    prec.append(0.0)  # insert 0.0 at end of list
     mpre = prec[:]
 
     """
@@ -49,16 +48,16 @@ def _voc_ap(rec, prec):
     #     range(start=(len(mpre) - 2), end=0, step=-1)
     # also the python function range excludes the end, resulting in:
     #     range(start=(len(mpre) - 2), end=-1, step=-1)
-    for i in range(len(mpre)-2, -1, -1):
-        mpre[i] = max(mpre[i], mpre[i+1])
+    for i in range(len(mpre) - 2, -1, -1):
+        mpre[i] = max(mpre[i], mpre[i + 1])
     """
      This part creates a list of indexes where the recall changes
         matlab: i=find(mrec(2:end)~=mrec(1:end-1))+1;
     """
     i_list = []
     for i in range(1, len(mrec)):
-        if mrec[i] != mrec[i-1]:
-            i_list.append(i) # if it was matlab would be i + 1
+        if mrec[i] != mrec[i - 1]:
+            i_list.append(i)  # if it was matlab would be i + 1
     """
      The Average Precision (AP) is the area under the curve
         (numerical integration)
@@ -66,11 +65,11 @@ def _voc_ap(rec, prec):
     """
     ap = 0.0
     for i in i_list:
-        ap += ((mrec[i]-mrec[i-1])*mpre[i])
+        ap += ((mrec[i] - mrec[i - 1]) * mpre[i])
     return ap, mrec, mpre
 
 
-def _check_dicts_for_content_and_size(ground_truth_dict: dict, result_dict: dict):
+def _check_dicts_for_content_and_size(ground_truth_dict: dict, result_dict: dict, allow_cut_off: bool):
     """
 
     Checks if the content and the size of the arrays adds up.
@@ -115,12 +114,39 @@ def _check_dicts_for_content_and_size(ground_truth_dict: dict, result_dict: dict
     if 'scores' not in result_dict.keys():
         result_dict['scores'] = [1] * len(result_dict['boxes'])
 
-    if not len(ground_truth_dict['boxes']) == len(ground_truth_dict['labels']) == len(result_dict['boxes']) == len(
-            result_dict['labels']) == len(result_dict['scores']):
+    if not allow_cut_off and \
+            not len(ground_truth_dict['boxes']) == len(ground_truth_dict['labels']) \
+                == len(result_dict['boxes']) == len(result_dict['labels']) == len(result_dict['scores']):
         raise ValueError("The arrays in the dictionary have different sizes. They need to have the same size.")
 
+    if allow_cut_off and len(ground_truth_dict['boxes']) != len(ground_truth_dict['labels']):
+        raise ValueError("The number of boxes and labels differ in the ground_truth_dict.")
 
-def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: float):
+    if allow_cut_off and len(result_dict['labels']) != len(result_dict['scores']):
+        raise ValueError("The numer of boxes and labels differ in the result_dict.")
+
+    if allow_cut_off and len(ground_truth_dict['labels']) > len(result_dict['labels']):
+        raise ValueError("You have less predictions than ground truth values. Please filter out ground truth values"
+                         "manually.")
+
+
+def _cut_off_data(ground_truth_dict: dict, result_dict: dict):
+    if len(ground_truth_dict['labels']) < len(result_dict['labels']):
+        diff = len(result_dict['labels']) - len(ground_truth_dict['labels'])
+        scores_np = np.array(result_dict['scores'])
+        filter_array = scores_np > np.sort(scores_np)[diff - 1]
+
+        boxes_np = np.array(result_dict['boxes'])
+        labels_np = np.array(result_dict['labels'])
+
+        new_result_dict = {'boxes': boxes_np[filter_array],
+                           'labels': labels_np[filter_array],
+                           'scores': scores_np[filter_array]}
+        return ground_truth_dict, new_result_dict
+    return ground_truth_dict, result_dict
+
+
+def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: float, allow_cut_off=False):
     """
     mAP@[iou_threshold]
 
@@ -150,12 +176,16 @@ def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: flo
     'scores':
         [0.99056727, 0.98965424, 0.93990153, 0.9157755]}
     :param iou_threshold: minimum iou for which the detection counts as successful
+    :param allow_cut_off: If true, there will be no exception if the number of predictions is not the same than
+    the number of ground truth values. Will cut off predictions with the least scores.
     :return: mean average precision (mAP)
     """
 
     # checking if the variables have the correct keys
 
-    _check_dicts_for_content_and_size(ground_truth_dict, result_dict)
+    _check_dicts_for_content_and_size(ground_truth_dict, result_dict, allow_cut_off)
+    if allow_cut_off:
+        ground_truth_dict, result_dict = _cut_off_data(ground_truth_dict, result_dict)
 
     occurring_gt_classes = set(ground_truth_dict['labels'])
     unique, counts = np.unique(ground_truth_dict['labels'], return_counts=True)
@@ -242,7 +272,8 @@ def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: flo
     return mean_average_precision
 
 
-def calculate_map_range(ground_truth_dict: dict, result_dict: dict, iou_begin: float, iou_end: float, iou_step: float):
+def calculate_map_range(ground_truth_dict: dict, result_dict: dict, iou_begin: float, iou_end: float, iou_step: float,
+                        allow_cut_off=False):
     """
     Gives mAP@[iou_begin:iou_end:iou_step], including iou_begin and iou_end.
 
@@ -274,10 +305,14 @@ def calculate_map_range(ground_truth_dict: dict, result_dict: dict, iou_begin: f
     :param iou_begin: first iou to evaluate
     :param iou_end: last iou to evaluate (included!)
     :param iou_step: step size
+    :param allow_cut_off: If true, there will be no exception if the number of predictions is not the same than
+    the number of ground truth values. Will cut off predictions with the least scores.
     :return: mean average precision
     """
 
-    _check_dicts_for_content_and_size(ground_truth_dict, result_dict)
+    _check_dicts_for_content_and_size(ground_truth_dict, result_dict, allow_cut_off)
+    if allow_cut_off:
+        ground_truth_dict, result_dict = _cut_off_data(ground_truth_dict, result_dict)
 
     iou_list = np.arange(iou_begin, iou_end + iou_step, iou_step)
 
