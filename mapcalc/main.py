@@ -69,7 +69,7 @@ def _voc_ap(rec, prec):
     return ap, mrec, mpre
 
 
-def _check_dicts_for_content_and_size(ground_truth_dict: dict, result_dict: dict, allow_cut_off: bool):
+def _check_dicts_for_content_and_size(ground_truth_dict: dict, result_dict: dict):
     """
 
     Checks if the content and the size of the arrays adds up.
@@ -114,39 +114,14 @@ def _check_dicts_for_content_and_size(ground_truth_dict: dict, result_dict: dict
     if 'scores' not in result_dict.keys():
         result_dict['scores'] = [1] * len(result_dict['boxes'])
 
-    if not allow_cut_off and \
-            not len(ground_truth_dict['boxes']) == len(ground_truth_dict['labels']) \
-                == len(result_dict['boxes']) == len(result_dict['labels']) == len(result_dict['scores']):
-        raise ValueError("The arrays in the dictionary have different sizes. They need to have the same size.")
-
-    if allow_cut_off and len(ground_truth_dict['boxes']) != len(ground_truth_dict['labels']):
+    if len(ground_truth_dict['boxes']) != len(ground_truth_dict['labels']):
         raise ValueError("The number of boxes and labels differ in the ground_truth_dict.")
 
-    if allow_cut_off and len(result_dict['labels']) != len(result_dict['scores']):
-        raise ValueError("The numer of boxes and labels differ in the result_dict.")
-
-    if allow_cut_off and len(ground_truth_dict['labels']) > len(result_dict['labels']):
-        raise ValueError("You have less predictions than ground truth values. Please filter out ground truth values"
-                         "manually.")
+    if not len(result_dict['boxes']) == len(result_dict['labels']) == len(result_dict['scores']):
+        raise ValueError("The number of boxes, labels and scores differ in the result_dict.")
 
 
-def _cut_off_data(ground_truth_dict: dict, result_dict: dict):
-    if len(ground_truth_dict['labels']) < len(result_dict['labels']):
-        diff = len(result_dict['labels']) - len(ground_truth_dict['labels'])
-        scores_np = np.array(result_dict['scores'])
-        filter_array = scores_np > np.sort(scores_np)[diff - 1]
-
-        boxes_np = np.array(result_dict['boxes'])
-        labels_np = np.array(result_dict['labels'])
-
-        new_result_dict = {'boxes': boxes_np[filter_array],
-                           'labels': labels_np[filter_array],
-                           'scores': scores_np[filter_array]}
-        return ground_truth_dict, new_result_dict
-    return ground_truth_dict, result_dict
-
-
-def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: float, allow_cut_off=False):
+def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: float):
     """
     mAP@[iou_threshold]
 
@@ -183,9 +158,7 @@ def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: flo
 
     # checking if the variables have the correct keys
 
-    _check_dicts_for_content_and_size(ground_truth_dict, result_dict, allow_cut_off)
-    if allow_cut_off:
-        ground_truth_dict, result_dict = _cut_off_data(ground_truth_dict, result_dict)
+    _check_dicts_for_content_and_size(ground_truth_dict, result_dict)
 
     occurring_gt_classes = set(ground_truth_dict['labels'])
     unique, counts = np.unique(ground_truth_dict['labels'], return_counts=True)
@@ -272,8 +245,7 @@ def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: flo
     return mean_average_precision
 
 
-def calculate_map_range(ground_truth_dict: dict, result_dict: dict, iou_begin: float, iou_end: float, iou_step: float,
-                        allow_cut_off=False):
+def calculate_map_range(ground_truth_dict: dict, result_dict: dict, iou_begin: float, iou_end: float, iou_step: float):
     """
     Gives mAP@[iou_begin:iou_end:iou_step], including iou_begin and iou_end.
 
@@ -310,9 +282,7 @@ def calculate_map_range(ground_truth_dict: dict, result_dict: dict, iou_begin: f
     :return: mean average precision
     """
 
-    _check_dicts_for_content_and_size(ground_truth_dict, result_dict, allow_cut_off)
-    if allow_cut_off:
-        ground_truth_dict, result_dict = _cut_off_data(ground_truth_dict, result_dict)
+    _check_dicts_for_content_and_size(ground_truth_dict, result_dict)
 
     iou_list = np.arange(iou_begin, iou_end + iou_step, iou_step)
 

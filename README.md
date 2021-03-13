@@ -50,10 +50,10 @@ result_dict = {
         [0.99056727, 0.98965424, 0.93990153, 0.9157755]}
 
 # calculates the mAP for an IOU threshold of 0.5
-print(calculate_map(ground_truth, result_dict, 0.5, allow_cut_off=False))
+print(calculate_map(ground_truth, result_dict, 0.5))
 
 # calculates the mAP average for the IOU thresholds 0.05, 0.1, 0.15, ..., 0.90, 0.95.
-print(calculate_map_range(ground_truth, result_dict, 0.05, 0.95, 0.05, allow_cut_off=False))
+print(calculate_map_range(ground_truth, result_dict, 0.05, 0.95, 0.05))
 
 ```
 
@@ -66,9 +66,6 @@ Boxes: A list of [x1, x2, y1, y2], each representing a box that was detected.
 Labels: List of classes (int) the algorithm assigned to the box
 
 Scores: List of scores (float) the algorithm generated. If not specified, scores will be set to 1.
-
-If your network produces more predictions than the available ground truth values, mapcalc offers a 
-way to automatically cut off the predictions with the worst scores by setting allow_cut_off=True.
 
 ## Authors:
 * **Simon Klimaschka**
