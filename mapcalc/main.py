@@ -151,8 +151,6 @@ def calculate_map(ground_truth_dict: dict, result_dict: dict, iou_threshold: flo
     'scores':
         [0.99056727, 0.98965424, 0.93990153, 0.9157755]}
     :param iou_threshold: minimum iou for which the detection counts as successful
-    :param allow_cut_off: If true, there will be no exception if the number of predictions is not the same than
-    the number of ground truth values. Will cut off predictions with the least scores.
     :return: mean average precision (mAP)
     """
 
