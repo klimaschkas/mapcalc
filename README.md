@@ -61,7 +61,8 @@ The methods expect two dicts:
 * ground_truth_dict with {boxes:, labels:} 
 * result_dict with {boxes:, labels:, scores:}
 
-Boxes: A list of [x1, x2, y1, y2], each representing a box that was detected.
+Boxes: A list of [x1, y1, x2, y2] (or [u, v, u + w, v + h], where (u, v) is the bounding box corner 
+and (w, h) is the shape of the bounding box, so width and height), each representing a box that was detected.
 
 Labels: List of classes (int) the algorithm assigned to the box
 
